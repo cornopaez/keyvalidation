@@ -41,4 +41,4 @@ class FilteredAccountGroupSerializer(serializers.ModelSerializer):
 class ValidationKeySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = ValidationKey
-		fields = ['id','public_key','account_id','group_id','document_number','creation_dt']
+		fields = ['id','public_key','document_number','creation_dt']
