@@ -6,6 +6,7 @@ urlpatterns = [
 	path('accounts/', views.AccountList.as_view()),
 	path('key_creation/', views.AccountAndKeyApiView.as_view()),
 	path('key_list', views.KeyGroupApiView.as_view()),
+	path('key_validation/', views.ValidationKeyProcessing.as_view())
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

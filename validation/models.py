@@ -32,10 +32,23 @@ class ValidationKey(models.Model):
                           help_text="Unique ID for this private key.")
 	private_key = models.CharField(max_length=2000, editable=False, help_text='The private key for a given account number.')
 	public_key = models.CharField(max_length=400, editable=False, help_text='The public key for a given account number.')
-	account_id = models.ForeignKey('Account', on_delete=models.PROTECT, null=False)
-	group_id = models.ForeignKey('KeyGroup', on_delete=models.PROTECT, null=False)
+	account_id = models.ForeignKey('Account', related_name='validation_key_account', on_delete=models.PROTECT, null=False)
+	group_id = models.ForeignKey('KeyGroup', related_name='validation_key_group', on_delete=models.PROTECT, null=False)
 	document_number = models.PositiveSmallIntegerField(default=0)
 	creation_dt = models.DateTimeField(auto_now_add=True)
+
+	KEY_STATUS = (
+		('a', 'Available'),
+		('s', 'Spent'),
+	)
+
+	status = models.CharField(
+		max_length=1,
+		choices=KEY_STATUS,
+		blank=False,
+		default='a',
+		help_text='The status of the validation key.'
+	)
 
 	objects = ValidationKeyManager()
 
@@ -80,4 +93,27 @@ class KeyGroup(models.Model):
 
 	def __str__(self):
 		"""String for representing the Model object."""
+		return str(self.id)
+
+class ValidationKeyHistory(models.Model):
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                          help_text="Unique ID for this key validation history entry.")
+	key_id = models.ForeignKey('ValidationKey', on_delete=models.PROTECT, null=False)
+
+	VALIDATION_OPTS = (
+		('s', 'Success'),
+		('f', 'Failure'),
+	)
+
+	validation_result = models.CharField(
+		max_length=1,
+		choices=VALIDATION_OPTS,
+		blank=False,
+		null=False,
+		help_text='The result of the key validation attempt.'
+	)
+	entry_dt = models.DateTimeField(auto_now_add=True)
+	source = models.CharField(max_length=100, blank=False, null=False)
+
+	def __str__(self):
 		return str(self.id)

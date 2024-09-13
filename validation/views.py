@@ -4,12 +4,12 @@ from django.shortcuts import render
 
 from .models import Account, ValidationKey, KeyGroup
 from rest_framework import generics
-from .serializers import AccountSerializer, KeyCreationRequestSerializer, GenericAccountFieldsSerializer, AccountGroupSerializer, FilteredAccountGroupSerializer, KeyGroupSerializer, ValidationKeySerializer
+from .serializers import AccountSerializer, KeyCreationRequestSerializer, GenericAccountFieldsSerializer, AccountGroupSerializer, FilteredAccountGroupSerializer, KeyGroupSerializer, ValidationKeySerializer, GenericValidationKeySerializer, EnrichedValidationKeySerializer, FilteredAccountGroupKeySerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .group_utils import get_valid_groups
-from .key_utils import create_group_keys
+from .key_utils import create_group_keys, get_validation_key_data
 
 class AccountList(generics.ListCreateAPIView):
     queryset = Account.objects.all()
@@ -33,6 +33,7 @@ class AccountAndKeyApiView(APIView):
 
             if len(acct_group_data['key_groups']) < 1:
 
+                # TODO: Change this so that the save op can be rolled back if things go wrong
                 new_key_group = (KeyGroup.objects
                     .create_key_group(
                         account_id=account,
@@ -77,10 +78,35 @@ class KeyGroupApiView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ValidationKeyProcessing(APIView):
+    def post(self, request, *args, **kwargs):
+        data = {
+            'account':request.data.get('account'),
+            'public_key':request.data.get('public_key'),
+            'document_number':request.data.get('document_number'),
+        }
+
+        serial_data = GenericValidationKeySerializer(data=data)
+
+        if serial_data.is_valid():
+            account_data = get_validation_key_data(serial_data.data)
+            print(AccountSerializer(account_data).data)
+            rich_key_data = FilteredAccountGroupKeySerializer(account_data)
+
+            return Response(rich_key_data.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 # {
 # "account":123456789,
 # "bank":1,
 # "source":"COR",
 # "doc_num_start":1,
 # "doc_num_end":20
+# }
+
+# {
+#     "account":123456789,
+#     "public_key": "b'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTnPvtNRe/z5Jz6PEehoi5rctLnNodwYOZcypKGEZosWLCTOaV4/MH53YRmxd9sfreuBtrBfGeU5JABiqDVCxhmNSJCc0Nd2I8iy0p+vvlaMrz7fRNLwYCypzaXf6mT/2tDXfx6Ii2+xBocXaFh7tYGpQlIs0bcZEemGacVwiMhvZyRQ+X5n+0d0cgIaj/61mAmFoOfpc0q1cWyGGfOOHP95UAPyELu4NON5m8Gh4ok+drbbCtUbYgXWM88M84k6/w0m2NYv9Pd/oF5LG7lEAa3xD7dQT7ppe7fm3TxpfPdZaXdbad1QIKHZZDo74/a8qGCeUsHPkX6ntOFSpWPfeh'",
+#     "document_number": 1000
 # }
