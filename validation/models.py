@@ -30,8 +30,11 @@ class Account(models.Model):
 class ValidationKey(models.Model):
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4,
                           help_text="Unique ID for this private key.")
-	private_key = models.CharField(max_length=2000, editable=False, help_text='The private key for a given account number.')
-	public_key = models.CharField(max_length=400, editable=False, help_text='The public key for a given account number.')
+	private_key = models.CharField(max_length=3500, editable=False, help_text='The private key for a given account number.')
+	private_key_hash = models.CharField(max_length=128, editable=False, help_text='The SHA512 has of the private key. This is used to enforce uniqueness in the database.')
+	public_key = models.CharField(max_length=1000, editable=False, help_text='The public key for a given account number.')
+	message = models.CharField(max_length=1000, null=False, blank=False, editable=False, help_text='A random string of chars to use for key validation.')
+	signature = models.CharField(max_length=1000, null=False, blank=False, editable=False, help_text='The signature for the message using the private key.')
 	account_id = models.ForeignKey('Account', related_name='validation_key_account', on_delete=models.PROTECT, null=False)
 	group_id = models.ForeignKey('KeyGroup', related_name='validation_key_group', on_delete=models.PROTECT, null=False)
 	document_number = models.PositiveSmallIntegerField(default=0)
@@ -55,14 +58,14 @@ class ValidationKey(models.Model):
 	class Meta:
 		constraints = [
 			UniqueConstraint(
-					Lower('private_key'),
-					name='private_key_unique',
-					violation_error_message='The private key already exixts.',
+					fields=['private_key_hash'],
+					name='private_key_hash_unique',
+					violation_error_message='The private key hash already exixts.',
 				),
 			UniqueConstraint(
-					fields = ('private_key','account_id','document_number'),
-					name = 'pv_key_acct_doc_num_unique',
-					violation_error_message='This key is already tied to this account and document number.',
+					fields = ('private_key_hash','account_id','document_number'),
+					name = 'private_key_hash_acct_doc_num_unique',
+					violation_error_message='This key hash is already tied to this account and document number.',
 				)
 		]
 

@@ -41,7 +41,7 @@ class ValidationKeySerializer(serializers.ModelSerializer):
 class EnrichedValidationKeySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = ValidationKey
-		fields = ['private_key','public_key','document_number','status','creation_dt']
+		fields = ['public_key','message','signature','document_number','status','creation_dt']
 
 class FilteredAccountGroupSerializer(serializers.ModelSerializer):
 	key_groups = KeyGroupSerializer(source='filtered_key_groups', many=True, read_only=True)
@@ -60,5 +60,5 @@ class FilteredAccountGroupKeySerializer(serializers.ModelSerializer):
 
 class GenericValidationKeySerializer(serializers.Serializer):
 	account = serializers.IntegerField()
-	public_key = serializers.CharField(max_length=400)
+	public_key = serializers.CharField(max_length=1000)
 	document_number = serializers.IntegerField()
