@@ -6,8 +6,11 @@ from  cryptography.exceptions import InvalidSignature
 
 import hashlib
 
-from .models import ValidationKey, Account, KeyGroup
+from .models import ValidationKey, Account, KeyGroup, ValidationKeyHistory
 from django.db.models import Q, Prefetch
+from django.core.exceptions import ValidationError
+
+from .serializers import EnrichedValidationKeySerializer
 
 import uuid
 import random, string
@@ -104,11 +107,13 @@ def get_validation_key_data(serial_data):
 
     return key_account_data
 
-def validate_public_key(rich_key_data):
-    # print(rich_key_data)
+def validate_public_key(account_data, rich_key_data, source):
     public_key = crypto_serialization.load_ssh_public_key(bytes.fromhex(rich_key_data['public_key']))
     signature = bytes.fromhex(rich_key_data['signature'])
     message = bytes.fromhex(rich_key_data['message'])
+    res = False
+    validation_key = account_data.filtered_validation_key[0]
+
     try:
         public_key.verify(
             signature,
@@ -119,6 +124,19 @@ def validate_public_key(rich_key_data):
             ),
             crypto_hashes.SHA256()
         )
-        return True
+
+        res = True
+        validation_result = 's'
+        validation_key.status = validation_result
+        validation_key.save()
     except InvalidSignature as e:
-        return False
+        validation_result = 'f'
+    finally:
+        history_entry = ValidationKeyHistory(key_id=validation_key,validation_result=validation_result,source=source)
+        try:
+            history_entry.full_clean()
+            history_entry.save()
+        except Exception as e:
+            print(e)
+            pass
+        return res

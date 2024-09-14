@@ -85,15 +85,6 @@ class KeyGroup(models.Model):
 
 	objects = KeyGroupManager()
 
-	# class Meta:
-	# 	constraints = [
-	# 		UniqueConstraint(
-	# 				Lower(str('id')),
-	# 				name='id_unique',
-	# 				violation_error_message='The Key Group ID already exixts.',
-	# 			)
-	# 	]
-
 	def __str__(self):
 		"""String for representing the Model object."""
 		return str(self.id)

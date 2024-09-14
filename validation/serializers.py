@@ -51,8 +51,8 @@ class FilteredAccountGroupSerializer(serializers.ModelSerializer):
 		fields = ('id','number','bank','source','key_groups')
 
 class FilteredAccountGroupKeySerializer(serializers.ModelSerializer):
-	key_group = KeyGroupSerializer(source='filtered_validation_key_groups', many=True, read_only=False)
-	validation_key = EnrichedValidationKeySerializer(source='filtered_validation_key', many=True, read_only=False)
+	key_group = KeyGroupSerializer(source='filtered_validation_key_groups', many=True, read_only=True)
+	validation_key = EnrichedValidationKeySerializer(source='filtered_validation_key', many=True, read_only=True)
 
 	class Meta:
 		model = Account
@@ -62,3 +62,4 @@ class GenericValidationKeySerializer(serializers.Serializer):
 	account = serializers.IntegerField()
 	public_key = serializers.CharField(max_length=1000)
 	document_number = serializers.IntegerField()
+	source = serializers.CharField(max_length=100)
